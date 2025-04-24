@@ -59,9 +59,18 @@ const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect }) => {
   });
   
   const frontAnimatedStyle = useAnimatedStyle(() => {
+    const rotateY = interpolate(
+      flipped.value,
+      [0, 1],
+      [180, 360]
+    );
+    
     return {
       opacity: flipped.value,
-      transform: [{ rotateY: '180deg' }],
+      transform: [
+        { rotateY: `${rotateY}deg` },
+        { scaleX: -1 }
+      ],
       position: 'absolute',
       width: '100%',
       height: '100%',
@@ -70,7 +79,14 @@ const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect }) => {
   });
   
   const backAnimatedStyle = useAnimatedStyle(() => {
+    const rotateY = interpolate(
+      flipped.value,
+      [0, 1],
+      [0, 180]
+    );
+
     return {
+      transform: [{ rotateY: `${rotateY}deg` }],
       opacity: 1 - flipped.value,
       backfaceVisibility: 'hidden',
     };
@@ -107,12 +123,14 @@ const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect }) => {
   };
 
   const handlePress = () => {
+    console.log('Card image:', card.image);
     if (selected.value === 0) {
       // Card is not selected yet, select it
       selected.value = withTiming(1, { duration: 300 });
       onSelect(card.id); // Tell parent this card was selected
     } else {
       // Card is already selected, flip it
+      // console.log('Card image source:', card.image);
       flipped.value = withTiming(1, { duration: 300 });
     }
   };
@@ -125,11 +143,19 @@ const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect }) => {
     >
       <Animated.View style={[styles.card, animatedCardStyle]}>
         <Animated.View style={[styles.cardSide, backAnimatedStyle]}>
-          <Image source={cardBackImage} style={styles.cardImage} resizeMode="cover" />
+          <Image 
+            source={cardBackImage} 
+            style={styles.cardImage} 
+            resizeMode="cover"
+          />
         </Animated.View>
         
         <Animated.View style={[styles.cardSide, frontAnimatedStyle]}>
-          <Image source={card.image} style={styles.cardImage} resizeMode="cover" />
+          <Image 
+            source={card.image} 
+            style={styles.cardImage}
+            resizeMode="cover"
+          />
           <Text style={styles.cardName}>{card.name}</Text>
         </Animated.View>
       </Animated.View>
@@ -165,12 +191,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#red',
+    overflow: 'hidden',
   },
   cardImage: {
     width: '100%',
     height: '100%',
     borderRadius: 10,
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   cardName: {
     position: 'absolute',

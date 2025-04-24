@@ -5,38 +5,112 @@ export const tarotCards = [
       id: 0,
       name: "The Fool",
       image: require('../assets/images/placeholder.png'),
-      meaning: "New beginnings, innocence, spontaneity, free spirit",
-      reversedMeaning: "Recklessness, risk-taking, inconsideration"
     },
     {
       id: 1,
       name: "The Magician",
       image: require('../assets/images/placeholder.png'),
-      meaning: "Manifestation, resourcefulness, power, inspired action",
-      reversedMeaning: "Manipulation, poor planning, untapped talents"
     },
     {
       id: 2,
       name: "The High Priestess",
       image: require('../assets/images/placeholder.png'),
-      meaning: "Intuition, sacred knowledge, divine feminine, subconscious mind",
-      reversedMeaning: "Secrets, disconnected from intuition, withdrawal"
     },
     {
       id: 3,
       name: "The Empress",
       image: require('../assets/images/placeholder.png'),
-      meaning: "Femininity, beauty, nature, nurturing, abundance",
-      reversedMeaning: "Creative block, dependence on others, emptiness"
     },
     {
       id: 4,
       name: "The Emperor",
       image: require('../assets/images/placeholder.png'),
-      meaning: "Authority, structure, control, fatherhood, power",
-      reversedMeaning: "Domination, excessive control, rigidity, inflexibility"
     },
-    // Add more cards as needed - this is just a starter set
+    {
+      id: 5,
+      name: "The Hierophant",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 6,
+      name: "The Lovers",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 7,
+      name: "The Chariot",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 8,
+      name: "Strength",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 9,
+      name: "The Hermit",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 10,
+      name: "Wheel of Fortune",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 11,
+      name: "Justice",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 12,
+      name: "The Hanged Man",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 13,
+      name: "Death",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 14,
+      name: "Temperance",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 15,
+      name: "The Devil",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 16,
+      name: "The Tower",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 17,
+      name: "The Star",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 18,
+      name: "The Moon",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 19,
+      name: "The Sun",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 20,
+      name: "Judgement",
+      image: require('../assets/images/placeholder.png'),
+    },
+    {
+      id: 21,
+      name: "The World",
+      image: require('../assets/images/placeholder.png'),
+    }
   ];
   
   export const cardBackImage = require('../assets/images/card-back.png');

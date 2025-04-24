@@ -1,8 +1,8 @@
 // src/components/TarotCard.js
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate, withSequence, withRepeat } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 
@@ -32,9 +32,32 @@ const getCardDimensions = () => {
 // Replace the current constants with
 const { width: CARD_WIDTH, height: CARD_HEIGHT } = getCardDimensions();
 
-const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect }) => {
+const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect, shouldReset, isShuffling }) => {
   const flipped = useSharedValue(0);
   const selected = useSharedValue(0);
+  const shuffle = useSharedValue(0);  // Add this for shuffle animation
+  
+  useEffect(() => {
+    if (shouldReset) {
+      flipped.value = 0;
+      selected.value = 0;
+    }
+  }, [shouldReset]);
+
+  useEffect(() => {
+    if (isShuffling) {
+      // Add shuffle animation
+      shuffle.value = withSequence(
+        withTiming(1, { duration: 200 }),  // Move up
+        withRepeat(
+          withTiming(2, { duration: 300 }), // Rotate back and forth
+          3,  // Number of shuffles
+          true  // Reverse
+        ),
+        withTiming(0, { duration: 200 })  // Return to original position
+      );
+    }
+  }, [isShuffling]);
   
   // Animation styles
   const animatedCardStyle = useAnimatedStyle(() => {
@@ -49,11 +72,25 @@ const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect }) => {
       [0, 1],
       [0, -50]
     );
+
+    // Add shuffle animation transforms
+    const shuffleRotate = interpolate(
+      shuffle.value,
+      [0, 1, 2],
+      [0, -5, 5]  // Rotation angles
+    );
+
+    const shuffleY = interpolate(
+      shuffle.value,
+      [0, 1, 2],
+      [0, -20, -20]  // Vertical movement
+    );
     
     return {
       transform: [
         { rotateY: `${rotateY}deg` },
-        { translateY }
+        { translateY: translateY + shuffleY },
+        { rotate: `${shuffleRotate}deg` }
       ]
     };
   });

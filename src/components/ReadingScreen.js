@@ -11,19 +11,25 @@ const { width, height } = Dimensions.get('window');
 const ReadingScreen = () => {
   const [cards, setCards] = useState([]);
   const [selectedCardId, setSelectedCardId] = useState(null);
+  const [isShuffling, setIsShuffling] = useState(false);
   
   useEffect(() => {
     shuffleCards();
   }, []);
   
   const shuffleCards = () => {
-    const shuffled = [...tarotCards]
-      .map(value => ({ value, sort: Math.random() }))
-      .sort((a, b) => a.sort - b.sort)
-      .map(({ value }) => value);
+    setIsShuffling(true);
     
-    setCards(shuffled);
-    setSelectedCardId(null);
+    setTimeout(() => {
+      const shuffled = [...tarotCards]
+        .map(value => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+      
+      setCards(shuffled);
+      setSelectedCardId(null);
+      setIsShuffling(false);
+    }, 1000);
   };
   
   const handleSelectCard = (cardId) => {
@@ -36,7 +42,11 @@ const ReadingScreen = () => {
       
       <View style={styles.header}>
         <Text style={styles.title}>Tarot Reading</Text>
-        <TouchableOpacity onPress={shuffleCards} style={styles.shuffleButton}>
+        <TouchableOpacity 
+          onPress={shuffleCards} 
+          disabled={isShuffling}
+          style={styles.shuffleButton}
+        >
           <Text style={styles.shuffleButtonText}>Shuffle</Text>
         </TouchableOpacity>
       </View>
@@ -50,6 +60,8 @@ const ReadingScreen = () => {
             totalCards={cards.length}
             cardBackImage={cardBackImage}
             onSelect={handleSelectCard}
+            shouldReset={selectedCardId === null}
+            isShuffling={isShuffling}
           />
         ))}
       </View>

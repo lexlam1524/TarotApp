@@ -1,6 +1,6 @@
 // src/components/TarotCard.js
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated';
 

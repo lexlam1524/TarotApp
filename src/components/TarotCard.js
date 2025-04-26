@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate, withSequence, withRepeat } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 
@@ -32,33 +32,19 @@ const getCardDimensions = () => {
 // Replace the current constants with
 const { width: CARD_WIDTH, height: CARD_HEIGHT } = getCardDimensions();
 
-const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect, shouldReset, isShuffling }) => {
+const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect, isSelected }) => {
   const flipped = useSharedValue(0);
   const selected = useSharedValue(0);
-  const shuffle = useSharedValue(0);  // Add this for shuffle animation
   
+  // Reset animations when isSelected changes to false
   useEffect(() => {
-    if (shouldReset) {
-      flipped.value = 0;
-      selected.value = 0;
+    if (!isSelected) {
+      // Reset both animations with timing
+      flipped.value = withTiming(0, { duration: 300 });
+      selected.value = withTiming(0, { duration: 300 });
     }
-  }, [shouldReset]);
+  }, [isSelected]);
 
-  useEffect(() => {
-    if (isShuffling) {
-      // Add shuffle animation
-      shuffle.value = withSequence(
-        withTiming(1, { duration: 200 }),  // Move up
-        withRepeat(
-          withTiming(2, { duration: 300 }), // Rotate back and forth
-          3,  // Number of shuffles
-          true  // Reverse
-        ),
-        withTiming(0, { duration: 200 })  // Return to original position
-      );
-    }
-  }, [isShuffling]);
-  
   // Animation styles
   const animatedCardStyle = useAnimatedStyle(() => {
     const rotateY = interpolate(
@@ -72,25 +58,11 @@ const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect, shouldRes
       [0, 1],
       [0, -50]
     );
-
-    // Add shuffle animation transforms
-    const shuffleRotate = interpolate(
-      shuffle.value,
-      [0, 1, 2],
-      [0, -5, 5]  // Rotation angles
-    );
-
-    const shuffleY = interpolate(
-      shuffle.value,
-      [0, 1, 2],
-      [0, -20, -20]  // Vertical movement
-    );
     
     return {
       transform: [
         { rotateY: `${rotateY}deg` },
-        { translateY: translateY + shuffleY },
-        { rotate: `${shuffleRotate}deg` }
+        { translateY }
       ]
     };
   });
@@ -131,31 +103,31 @@ const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect, shouldRes
 
   // Calculate fan position
   const calculatePosition = () => {
-    // Calculate horizontal position
-    const totalWidth = width * 0.9; // Use 90% of screen width
-    const horizontalSpacing = totalWidth / (totalCards - 1);
-    const startX = width * 0.05; // Start at 5% of screen width
+    // Calculate horizontal position with more overlap
+    const totalWidth = width *1.0; // Reduce total width to make cards closer
+    const horizontalSpacing = totalWidth / (totalCards *1.5); // More overlap between cards
+    const startX = width * 0.14; // Start more to the left
     const xPosition = startX + (horizontalSpacing * index);
     
-    // Calculate arc position
-    const maxArcHeight = 150; // Maximum height of the arc
-    // Create parabolic arc effect
-    const arcHeight = maxArcHeight * Math.sin((index / (totalCards - 1)) * Math.PI);
+    // Calculate arc position with more pronounced curve
+    const maxArcHeight = 100; // Reduce max height for tighter arc
+    // Create more pronounced parabolic arc effect
+    const normalizedPosition = index / (totalCards - 1);
+    const arcHeight = maxArcHeight * Math.sin(Math.PI * normalizedPosition);
     
-    // Calculate rotation (cards at edges rotate more than center)
-    const maxRotation = 30; // Maximum rotation angle
-    const normalizedPosition = index / (totalCards - 1); // 0 to 1
-    const rotation = maxRotation * (normalizedPosition - 0.5) * 2; // -30 to +30 degrees
+    // Calculate rotation with more angle for fan effect
+    const maxRotation = 40; // Increase max rotation for more fan-like appearance
+    const rotation = maxRotation * (normalizedPosition - 0.5);
     
     return {
-        position: 'absolute',
-        transform: [
-            { rotate: `${rotation}deg` }
-        ],
-        left: xPosition,
-        bottom: 50, // Distance from bottom of screen
-        marginTop: 20,
-        translateY: -arcHeight // Lift cards in arc pattern
+      position: 'absolute',
+      transform: [
+        { rotate: `${rotation}deg` },
+        { translateY: -arcHeight }
+      ],
+      left: xPosition,
+      bottom: 70, // Raise the cards up a bit
+      zIndex: index, // Ensure proper card stacking
     };
   };
 
@@ -207,7 +179,6 @@ const styles = StyleSheet.create({
     height: CARD_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1,
   },
   card: {
     width: '100%',

@@ -1,25 +1,28 @@
 // src/components/ReadingScreen.js
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { tarotCards, cardBackImage } from '../data/tarotCards';
 import TarotCard from './TarotCard';
 
 const { width, height } = Dimensions.get('window');
+const CARDS_PER_VIEW_MOBILE = 13; // Number of cards to show at once on mobile
 
 const ReadingScreen = () => {
   const [cards, setCards] = useState([]);
   const [selectedCardId, setSelectedCardId] = useState(null);
-  const [isShuffling, setIsShuffling] = useState(false);
+  const isWeb = Platform.OS === 'web';
   
   useEffect(() => {
     shuffleCards();
   }, []);
   
   const shuffleCards = () => {
-    setIsShuffling(true);
+    // First reset all states
+    setSelectedCardId(null);
     
+    // Then after a short delay, shuffle the cards
     setTimeout(() => {
       const shuffled = [...tarotCards]
         .map(value => ({ value, sort: Math.random() }))
@@ -27,13 +30,65 @@ const ReadingScreen = () => {
         .map(({ value }) => value);
       
       setCards(shuffled);
-      setSelectedCardId(null);
-      setIsShuffling(false);
-    }, 1000);
+    }, 300); // 300ms delay to allow reset animation to complete
   };
   
   const handleSelectCard = (cardId) => {
     setSelectedCardId(cardId);
+  };
+
+  const renderCards = () => {
+    if (isWeb) {
+      // Web version - render all cards in one view
+      return (
+        <View style={styles.cardDeckContainer}>
+          {cards.map((card, index) => (
+            <TarotCard
+              key={card.id}
+              card={card}
+              index={index}
+              totalCards={cards.length}
+              cardBackImage={cardBackImage}
+              onSelect={handleSelectCard}
+              isSelected={selectedCardId === card.id}
+            />
+          ))}
+        </View>
+      );
+    } else {
+      // Mobile version - render in scrollable view
+      return (
+        <ScrollView 
+          horizontal
+          contentContainerStyle={styles.scrollViewContent}
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={width * 0.8} // Snap to sections
+        >
+          {Array(Math.ceil(cards.length / CARDS_PER_VIEW_MOBILE)).fill(0).map((_, pageIndex) => (
+            <View 
+              key={pageIndex} 
+              style={[styles.cardDeckContainer, { width: width }]}
+            >
+              {cards.slice(
+                pageIndex * CARDS_PER_VIEW_MOBILE,
+                (pageIndex + 1) * CARDS_PER_VIEW_MOBILE
+              ).map((card, index) => (
+                <TarotCard
+                  key={card.id}
+                  card={card}
+                  index={index}
+                  totalCards={CARDS_PER_VIEW_MOBILE}
+                  cardBackImage={cardBackImage}
+                  onSelect={handleSelectCard}
+                  isSelected={selectedCardId === card.id}
+                />
+              ))}
+            </View>
+          ))}
+        </ScrollView>
+      );
+    }
   };
   
   return (
@@ -42,29 +97,12 @@ const ReadingScreen = () => {
       
       <View style={styles.header}>
         <Text style={styles.title}>Tarot Reading</Text>
-        <TouchableOpacity 
-          onPress={shuffleCards} 
-          disabled={isShuffling}
-          style={styles.shuffleButton}
-        >
+        <TouchableOpacity onPress={shuffleCards} style={styles.shuffleButton}>
           <Text style={styles.shuffleButtonText}>Shuffle</Text>
         </TouchableOpacity>
       </View>
       
-      <View style={styles.cardDeckContainer}>
-        {cards.map((card, index) => (
-          <TarotCard
-            key={card.id}
-            card={card}
-            index={index}
-            totalCards={cards.length}
-            cardBackImage={cardBackImage}
-            onSelect={handleSelectCard}
-            shouldReset={selectedCardId === null}
-            isShuffling={isShuffling}
-          />
-        ))}
-      </View>
+      {renderCards()}
     </View>
   );
 };
@@ -102,6 +140,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: height * 0.1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
   }
 });
 

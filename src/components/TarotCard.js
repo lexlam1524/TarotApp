@@ -32,7 +32,7 @@ const getCardDimensions = () => {
 // Replace the current constants with
 const { width: CARD_WIDTH, height: CARD_HEIGHT } = getCardDimensions();
 
-const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect, isSelected }) => {
+const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect, isSelected, scrollOffset = 0 }) => {
   const flipped = useSharedValue(0);
   const selected = useSharedValue(0);
   
@@ -103,31 +103,32 @@ const TarotCard = ({ card, index, totalCards, cardBackImage, onSelect, isSelecte
 
   // Calculate fan position
   const calculatePosition = () => {
-    // Calculate horizontal position with more overlap
-    const totalWidth = width *1.0; // Reduce total width to make cards closer
-    const horizontalSpacing = totalWidth / (totalCards *1.5); // More overlap between cards
-    const startX = width * 0.14; // Start more to the left
-    const xPosition = startX + (horizontalSpacing * index);
-    
-    // Calculate arc position with more pronounced curve
-    const maxArcHeight = 100; // Reduce max height for tighter arc
-    // Create more pronounced parabolic arc effect
-    const normalizedPosition = index / (totalCards - 1);
+    // Make arc span the full width and reduce overlap
+    const totalWidth = width * 1.05; // Slightly wider than screen for edge-to-edge
+    const horizontalSpacing = totalWidth / (totalCards - 1);
+    const startX = 0;
+    // Use fractional index for smooth movement
+    const relativeIndex = index - scrollOffset;
+    const xPosition = startX + (horizontalSpacing * relativeIndex);
+
+    // Flatter arc
+    const maxArcHeight = 35;
+    const normalizedPosition = (relativeIndex) / (totalCards - 1);
     const arcHeight = maxArcHeight * Math.sin(Math.PI * normalizedPosition);
-    
-    // Calculate rotation with more angle for fan effect
-    const maxRotation = 40; // Increase max rotation for more fan-like appearance
+
+    // Slightly less rotation for flatter fan
+    const maxRotation = 25;
     const rotation = maxRotation * (normalizedPosition - 0.5);
-    
+
     return {
       position: 'absolute',
       transform: [
         { rotate: `${rotation}deg` },
-        { translateY: -arcHeight }
+        { translateY: -arcHeight + maxArcHeight }
       ],
       left: xPosition,
-      bottom: 70, // Raise the cards up a bit
-      zIndex: index, // Ensure proper card stacking
+      bottom: 0,
+      zIndex: index,
     };
   };
 

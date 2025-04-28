@@ -1,10 +1,11 @@
 // src/components/ReadingScreen.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { tarotCards, cardBackImage } from '../data/tarotCards';
 import TarotCard from './TarotCard';
+import { PanGestureHandler } from 'react-native-gesture-handler';
 
 const { width, height } = Dimensions.get('window');
 const CARDS_PER_VIEW_MOBILE = 13; // Number of cards to show at once on mobile
@@ -12,7 +13,11 @@ const CARDS_PER_VIEW_MOBILE = 13; // Number of cards to show at once on mobile
 const ReadingScreen = () => {
   const [cards, setCards] = useState([]);
   const [selectedCardId, setSelectedCardId] = useState(null);
+  const [scrollOffset, setScrollOffset] = useState(0); // float, can be fractional
+  const initialStartIndex = useRef(0);
   const isWeb = Platform.OS === 'web';
+  const panRef = useRef();
+  const dragX = useRef(0);
   
   useEffect(() => {
     shuffleCards();
@@ -21,6 +26,15 @@ const ReadingScreen = () => {
   const shuffleCards = () => {
     // First reset all states
     setSelectedCardId(null);
+    // Reset startIndex to center after shuffle
+    const CARD_WIDTH = width * 0.2;
+    const MIN_VISIBLE_CARDS = 12;
+    const MAX_VISIBLE_CARDS = 26;
+    let visibleCards = Math.floor(width / (CARD_WIDTH * 0.7)); // 0.7 for overlap
+    visibleCards = Math.max(MIN_VISIBLE_CARDS, Math.min(MAX_VISIBLE_CARDS, visibleCards));
+    const middle = Math.floor(tarotCards.length / 2);
+    const halfWindow = Math.floor(visibleCards / 2);
+    setScrollOffset(middle - halfWindow);
     
     // Then after a short delay, shuffle the cards
     setTimeout(() => {
@@ -56,37 +70,61 @@ const ReadingScreen = () => {
         </View>
       );
     } else {
-      // Mobile version - render in scrollable view
+      // Mobile version - show only a window of visible cards, starting at scrollOffset
+      const CARD_WIDTH = width * 0.2;
+      const MIN_VISIBLE_CARDS = 12;
+      const MAX_VISIBLE_CARDS = 26;
+      let visibleCards = Math.floor(width / (CARD_WIDTH * 0.7)); // 0.7 for overlap
+      visibleCards = Math.max(MIN_VISIBLE_CARDS, Math.min(MAX_VISIBLE_CARDS, visibleCards));
+      // Calculate the center index for the visible window
+      const maxOffset = cards.length - visibleCards;
+      let centerOffset = Math.max(0, Math.min(maxOffset, scrollOffset));
+      // The visible window is always visibleCards wide, but can be fractional offset
+      const start = Math.floor(centerOffset);
+      const end = Math.min(cards.length, start + visibleCards + 1); // +1 for smooth edge
+      const visible = cards.slice(start, end);
+
+      // Gesture handler for dragging
+      const onGestureEvent = (event) => {
+        const { translationX, state } = event.nativeEvent;
+        if (state === 2) { // BEGAN
+          initialStartIndex.current = scrollOffset;
+        } else if (state === 4) { // ACTIVE
+          // Calculate offset in cards (float)
+          let offset = -translationX / CARD_WIDTH;
+          let newOffset = initialStartIndex.current + offset;
+          newOffset = Math.max(0, Math.min(cards.length - visibleCards, newOffset));
+          setScrollOffset(newOffset);
+        } else if (state === 5) { // END
+          // Snap to nearest
+          let offset = -translationX / CARD_WIDTH;
+          let newOffset = initialStartIndex.current + offset;
+          newOffset = Math.max(0, Math.min(cards.length - visibleCards, newOffset));
+          setScrollOffset(Math.round(newOffset));
+        }
+      };
+
       return (
-        <ScrollView 
-          horizontal
-          contentContainerStyle={styles.scrollViewContent}
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          snapToInterval={width * 0.8} // Snap to sections
+        <PanGestureHandler
+          ref={panRef}
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={onGestureEvent}
         >
-          {Array(Math.ceil(cards.length / CARDS_PER_VIEW_MOBILE)).fill(0).map((_, pageIndex) => (
-            <View 
-              key={pageIndex} 
-              style={[styles.cardDeckContainer, { width: width }]}
-            >
-              {cards.slice(
-                pageIndex * CARDS_PER_VIEW_MOBILE,
-                (pageIndex + 1) * CARDS_PER_VIEW_MOBILE
-              ).map((card, index) => (
-                <TarotCard
-                  key={card.id}
-                  card={card}
-                  index={index}
-                  totalCards={CARDS_PER_VIEW_MOBILE}
-                  cardBackImage={cardBackImage}
-                  onSelect={handleSelectCard}
-                  isSelected={selectedCardId === card.id}
-                />
-              ))}
-            </View>
-          ))}
-        </ScrollView>
+          <View style={styles.cardArcContainer}>
+            {visible.map((card, index) => (
+              <TarotCard
+                key={card.id}
+                card={card}
+                index={index}
+                totalCards={visible.length}
+                cardBackImage={cardBackImage}
+                onSelect={handleSelectCard}
+                isSelected={selectedCardId === card.id}
+                scrollOffset={centerOffset - start} // pass fractional offset for smooth arc
+              />
+            ))}
+          </View>
+        </PanGestureHandler>
       );
     }
   };
@@ -140,6 +178,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: height * 0.1,
+  },
+  cardArcContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: height * 0.35, // Adjust as needed for arc height
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   scrollViewContent: {
     flexGrow: 1,
